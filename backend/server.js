@@ -307,4 +307,4 @@ io.on('connection', (socket) => {
 
 console.log('WebSocket server running on ws')
 
-server.listen(PORT, console.log(`Server Started at: ${PORT}`));
+server.listen(PORT,()=> console.log(`Server Started at: ${PORT}`));
