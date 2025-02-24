@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+        integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="style.css">
+    <title>Tic Tac Toe</title>
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"
+        integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+"
+        crossorigin="anonymous"></script>
+</head>
+
+<body class="center">
+
+    <div class="loading-container">
+        <div class="loading-bar"></div>
+    </div>
+
+    <div class="heading">
+        <h1>Tic Tac Toe</h1>
+    </div>
+
+    <div class="nameBoard">
+        <div class="nameInput">
+            <input type="text" placeholder="Enter name:" id="username">
+        </div>
+        <div class="submitName">
+            <button class="submit">Save</button>
+        </div>
+    </div>
+
+    <div class="finding">
+        <span>finding</span>
+        <span class="dots">
+            <span>.</span>
+            <span>.</span>
+            <span>.</span>
+        </span>
+    </div>
+
+    <div class="game">
+        <div class="scoreBoard">
+            <div class="score">
+                <div id="player1"></div>
+                <div id="player1Win"></div>
+            </div>
+            <div class="score">
+                <div id="player2"></div>
+                <div id="player2Win"></div>
+            </div>
+        </div>
+
+        <div class="turn">
+            <p>TURN: </p>
+        </div>
+
+
+        <div class="gameBoard">
+
+            <div class="round">
+                <p><i>3 Rounds</i></p>
+            </div>
+
+            <div class="board">
+
+
+                <div class="box" id="0"></div>
+                <div class="box" id="1"></div>
+                <div class="box" id="2"></div>
+                <div class="box" id="3"></div>
+                <div class="box" id="4"></div>
+                <div class="box" id="5"></div>
+                <div class="box" id="6"></div>
+                <div class="box" id="7"></div>
+                <div class="box" id="8"></div>
+
+            </div>
+
+            <div class="drawBoard">
+                <p>Draw</p>
+            </div>
+
+            <div class="winner">
+                <p class="winnerName"></p>
+            </div>
+
+        </div>
+
+        <button class="wrongMove">
+            Invalid Move
+        </button>
+
+    </div>
+    <div class="replay">
+        <div><i>REPLAY</i></div>
+    </div>
+    <script type="module" src="client.js" defer></script>
+</body>
+
+</html>
