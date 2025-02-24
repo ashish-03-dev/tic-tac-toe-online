@@ -34,6 +34,9 @@ const players = {};
 let roomCount = 1;
 
 
+app.get('/',(req,res)=>{
+    console.log("server running");
+})
 
 
 // Handle Player Disconnections
