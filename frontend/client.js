@@ -376,7 +376,7 @@ function makeMove(n) {
 function connectWebSocket() {
     console.log("try to connect to server");
 
-    socket = io('http://localhost:8080');
+    socket = io('https://onlinetictactoe-yf4j.onrender.com' || 'http://localhost:8080');
 
     // When Connected
     socket.on('connect', async () => {
@@ -420,7 +420,7 @@ function connectWebSocket() {
         setName(data.opponentName);
 
         await delay(1000);
-        fadeOut(finding, 200); 
+        fadeOut(finding, 200);
         await gameAppear();
         socket.emit('ready');
     });
