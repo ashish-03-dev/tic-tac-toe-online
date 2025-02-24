@@ -376,7 +376,7 @@ function makeMove(n) {
 function connectWebSocket() {
     console.log("try to connect to server");
 
-    socket = io('https://onlinetictactoe-yf4j.onrender.com' || 'http://localhost:8080');
+    socket = io(process.env.SOCKET_URL || 'http://localhost:8080');
 
     // When Connected
     socket.on('connect', async () => {
