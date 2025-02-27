@@ -1,6 +1,5 @@
 // Server Connection
 
-
 // handled on the server to maintain fairness and prevent cheating. 
 const winPatterns = [
     [0, 1, 2],
@@ -67,9 +66,6 @@ function handlePlayerMessage(socket) {
 
     socket.on('message', (message) => {
         // let data = JSON.parse(message);
-
-        console.log("message from client", message);
-        // console.log(`recieved:${data.type}`);
 
         // if (data.type === 'ping') {
         //     socket.emit(JSON.stringify({ type: 'pong' })); // Reply to Pong
@@ -152,7 +148,6 @@ function handlePlayerMove(socket) {
             game.boxesFilled++;
 
             // Sending to Opponent
-            console.log("sending to opponent", moveData)
             socket.to(roomId).emit("opponentMove", moveData);
 
             handleCheckWinner(game, roomId, boxKey);

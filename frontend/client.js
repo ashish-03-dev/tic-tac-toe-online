@@ -372,6 +372,7 @@ function makeMove(n) {
     console.log("move emmitted");
 };
 
+
 // connect Online
 function connectWebSocket() {
     console.log("try to connect to server");
