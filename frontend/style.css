@@ -12,12 +12,23 @@ body {
     align-items: center;
 }
 
-.loading-container {
-    height: 16px;
+.loading-container{
     width: 100%;
     max-width: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.1rem;
+    transition: opacity 0.2s;
+    font-weight: 800;
+    color: #8e5572;
+}
+
+.loading-bar-container {
+    height: 8px;
+    width: 100%;
     border-radius: 8px;
-    transition: opacity 0.2s ease-out, visibility 0.2s ease-out;
     box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.1), -8px -8px 8px white;
     overflow: hidden;
     position: relative;
@@ -26,9 +37,9 @@ body {
 .loading-bar {
     width: 0%;
     height: 100%;
-    background-color: #3498db;
+    background-color: #8e5572;
     animation: loading 4s ease-in-out forwards;
-    /* border-radius: 5px; */
+    border-radius: 5px;
 }
 
 
@@ -74,6 +85,22 @@ body {
     -webkit-text-fill-color: transparent;
     transition: opacity 0.4s;
 }
+.server{
+    font-size: 2rem;
+    color: #8e5572;
+    font-weight: 800;
+    margin-top: 10px;
+    opacity: 0;
+    display: none;
+    transition: opacity 0.4s;
+}
+.server p {
+    font-size: 1rem;
+    font-weight: bold;
+    text-align: center;
+    color: #8e5572;
+    margin-top: 8px;
+}
 
 .nameBoard {
     width: 300px;
@@ -109,18 +136,19 @@ body {
 
 }
 
-
-.finding {
-    height: 80px;
-    width: 250px;
-    box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.1), -8px -8px 8px white;
-    border-radius: 10px;
+.waiting {
+    background-color: #f9f9f9;
+    color: #8e5572;
     font-size: 2rem;
-    align-content: center;
+    font-weight: 800;
     text-align: center;
+    align-content: center;
     display: none;
     opacity: 0;
+    transition: opacity .4s linear;
+    border-radius: 10px;
 }
+
 
 .dots span {
     opacity: 0;
@@ -153,17 +181,6 @@ body {
     }
 }
 
-.finding {
-    height: 80px;
-    width: 250px;
-    box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.1), -8px -8px 8px white;
-    border-radius: 10px;
-    font-size: 2rem;
-    align-content: center;
-    text-align: center;
-    display: none;
-    opacity: 0;
-}
 
 .game {
     height: calc(100svh - 100px);
@@ -174,25 +191,6 @@ body {
     align-items: center;
     opacity: 0;
     transition: opacity .4s linear;
-}
-
-
-.turn {
-    height: 55px;
-    width: 320px;
-    background-color: #f9f9f9;
-    color: gray;
-    font-size: 2rem;
-    font-weight: 800;
-    text-align: center;
-    align-content: center;
-    border-radius: 10px;
-    opacity: 0;
-    transition: opacity .2s linear;
-    margin-top: 30px;
-    margin-bottom: 20px;
-    box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.1), -8px -8px 8px white;
-
 }
 
 .gameBoard {
@@ -264,8 +262,32 @@ body {
     border-radius: 10px;
     margin-top: 30px;
     box-sizing: border-box;
-    color: gray;
+    color: #333;
+    background-color: #f9f9f9;
     box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.1), -8px -8px 8px white;
+}
+
+
+.turn {
+    height: 55px;
+    width: 320px;
+    background-color: #f9f9f9;
+    color: #8e5572;
+    font-size: 2rem;
+    font-weight: 800;
+    text-align: center;
+    align-content: center;
+    border-radius: 10px;
+    opacity: 0;
+    transition: opacity .2s linear;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.1), -8px -8px 8px white;
+}
+.turn ps{
+    font-size: 1.6rem;
+    font-weight: bold;
+    margin: 0 8px;
 }
 
 .round {
@@ -350,7 +372,7 @@ body {
     position: absolute;
     display: none;
     opacity: 0;
-    transition: opacity .4s linear;
+    transition: all .4s linear;
     cursor: pointer;
     box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.1), -8px -8px 8px white;
 

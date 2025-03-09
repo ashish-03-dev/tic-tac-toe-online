@@ -12,6 +12,7 @@ let isValidMove = false;
 
 const loader = document.querySelector(".loading-container");
 const heading = document.querySelector(".heading");
+const server = document.querySelector(".server");
 const game = document.querySelector(".game");
 const board = document.querySelector(".board");
 const draw = document.querySelector(".drawBoard");
@@ -23,7 +24,7 @@ const symbolX = '<i class="fa-solid fa-xmark"></i>';
 const symbolO = '<i class="fa-regular fa-circle"></i>';
 const scoreBoard = document.querySelector(".scoreBoard");
 const nameBoard = document.querySelector(".nameBoard");
-const finding = document.querySelector(".finding");
+const waiting = document.querySelector(".waiting");
 
 document.addEventListener("DOMContentLoaded", async function () {
 
@@ -33,8 +34,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     await appearFlex(heading, 400); // make heading appear and animation
 
-    disableBoxes();
+    await appearBlock(server, 400); // make server appear
 
+    disableBoxes();
     connectWebSocket();
 })
 
@@ -95,12 +97,10 @@ function disableBoxes() {
 
 async function updateSymbol(sym) {
     if (sym === "X") {
-        console.log("symbol set");
         symbol = "X";
         yourSymbol = symbolX;
         opponentSymbol = symbolO;
     } else {
-        console.log("symbol set");
         symbol = "O";
         yourSymbol = symbolO;
         opponentSymbol = symbolX;
@@ -115,7 +115,6 @@ async function gameAppear() {
 
 // RoundBoard
 async function callRoundBoard() {
-    console.log("Round Board Called");
     let str = `<p><i>Round ${roundNumber}</i></p>`;
     round.innerHTML = str;
 
@@ -123,7 +122,6 @@ async function callRoundBoard() {
     await delay(900);//let user see round board after appearing
 
     await fadeOut(round, 200);
-    enableBoxes();
     showTurnArea();
 }
 
@@ -140,27 +138,24 @@ function updateTurn(turn) {
 
     //display turn 
     if (turn === symbol) {
-        console.log("turn updated");
         turnP = true;
         enableBoxes();// enable boxes for clicks
-        turnBoard.innerHTML = "<p>Your Turn</p>";
+        turnBoard.innerHTML = `<p>Your Turn <ps>${yourSymbol}</ps></p>`;
         boxSymbol = yourSymbol;
     } else {
-        console.log("turn updated");
         turnP = false;
         disableBoxes();
-        turnBoard.innerHTML = "<p>Opponent Turn</p>";
+        turnBoard.innerHTML = `<p>Opponent Turn</p>`;
         boxSymbol = opponentSymbol;
     }
 }
 
 
-function setName(opponentName) {
+async function setName(opponentName) {
     const yourName = document.getElementById("username").value.toUpperCase();
-    scoreBoard.querySelector("#player1").innerText = `${yourName || "ANONYMOUS"} '${symbol == "X" ? "X" : "O"}'`;
-    scoreBoard.querySelector("#player2").innerText = `${opponentName} '${symbol == "X" ? "O" : "X"}'`;
+    scoreBoard.querySelector("#player1").innerText = `${yourName || "ANONYMOUS"}`;
+    scoreBoard.querySelector("#player2").innerText = `${opponentName}`;
 };
-
 
 function setScoreNumber(score) {
     let s1 = document.querySelector("#player1Win");
@@ -220,7 +215,6 @@ async function insetShadow(box) {
 
 //wrong move animation
 function wrongMove() {
-    console.log("wrongMove");
     let wrong = document.querySelector(".wrongMove");
 
     wrong.style.opacity = "1";
@@ -230,7 +224,6 @@ function wrongMove() {
     }, 1200);
 
 }
-
 
 function boxUnavailable() {
     boxNodes.forEach((box) => {
@@ -248,18 +241,13 @@ async function zoomInBoxes(list) {
     }
 
     await delay(400);
-    zoomOutBoxes(list);
-}
-
-//remove zoom
-function zoomOutBoxes(list) {
-    let strArray = list.map(String);
     for (let i of strArray) {
         let box = document.getElementById(i);
         let tick = box.querySelector(".tick");
         tick.style.scale = ".92";
     }
 }
+
 
 //from server
 async function showWinnerEffect(list) {
@@ -278,20 +266,21 @@ async function showWinnerEffect(list) {
 
 
 async function openDraw() {
+    await delay(500);
     await appearBlock(draw, 400); // open DrawBoard;
 
     await delay(1400); //let user see
 
     await fadeOut(draw, 400); // close DrawBoard
 
-    await delay(800);
+    await delay(600);
     resetGame();
 }
 
 
 async function showWinnerBoard(data) { // from server
     hideTurnArea();
-    writeWinner(data);
+    await writeWinner(data);
     await appearBlock(winner, 400);
 
     await delay(1000);
@@ -301,7 +290,7 @@ async function showWinnerBoard(data) { // from server
 }
 
 //Write in Winner Board
-function writeWinner(result) {
+async function writeWinner(result) {
     let winnerName = document.querySelector(".winnerName");
 
     if (result == "draw")
@@ -349,7 +338,7 @@ replay.addEventListener("click", async function restartGame() {
 // Submit Name
 nameBoard.querySelector(".submit").addEventListener('click', async () => {
     await fadeOut(nameBoard, 200);
-    appearBlock(finding, 200);
+    appearBlock(waiting, 400);
     socket.emit('joinRoom'); // ask to join Room
 });
 
@@ -369,59 +358,34 @@ let reconnectAttempts = 0;
 function makeMove(n) {
     // send move to server
     socket.emit('move', { position: n });
-    console.log("move emmitted");
 };
 
 
 // connect Online
 function connectWebSocket() {
-    console.log("try to connect to server");
 
     socket = io("https://onlinetictactoe-yf4j.onrender.com");
 
     // When Connected
     socket.on('connect', async () => {
-        console.log("Connected to server");
         await delay(1000);
-
-        reconnectAttempts = 0;
+        await fadeOut(server, 400);
+        // reconnectAttempts = 0;
         appearFlex(nameBoard, 200);
-
-
-        // Send a ping message every second
-        // pingInterval = setInterval(() => {
-        //     if (socket.readyState === WebSocket.OPEN) {
-        //         console.log("Sending Ping...");
-        //         socket.emit({ type: "ping" });
-
-        //         // set a timeout: if no pong comes back within 10s
-        //         pongTimeout = setTimeout(() => {
-        //             console.log("No Pong Recieved");
-        //             socket.close();
-        //         }, 10000);
-        //     }
-        // }, 30000);
     });
 
     // Both Player
     socket.on('playerJoined', async () => {
-        console.log("player joined");
         await sendName();
     })
 
-    // opponent username
-    socket.on('username', (username) => {
-        setUsername(username);
-    })
 
     // listen for symbol
     socket.on('gameData', async (data) => {
-        console.log("gameData Recieved");
         await updateSymbol(data.symbol);
-        setName(data.opponentName);
-
+        await setName(data.opponentName);
         await delay(1000);
-        fadeOut(finding, 200);
+        await fadeOut(waiting, 200);
         await gameAppear();
         socket.emit('ready');
     });
@@ -444,7 +408,6 @@ function connectWebSocket() {
 
     // Process Opponent Move
     socket.on('opponentMove', (moveData) => {
-        console.log('Opponent Moved', moveData.position);
         opponentMove(moveData.position);
     });
 
@@ -471,22 +434,9 @@ function connectWebSocket() {
     // when Wrong Move sent by client after manipulation
     socket.on('wrongMove', () => { wrongMove() });
 
-    // Revieved Message
-    socket.on('message', (msg) => {
-        // let data = JSON.parse(event.data);
-        console.log("message from server", msg);
-        // if (data.type === 'pong') {
-        //     console.log("Pong Recieved, connection is alive.");
-        //     clearTimeout(pongTimeout);
-        // }
-    });
-
-
     // When Disconnected
     // socket.on('disconnect'), () => {
     //     console.log("Disconnected from Server");
-    //     clearInterval(pingInterval);
-    //     clearTimeout(pongTimeout);
 
     //     socket = null;
 
@@ -504,8 +454,8 @@ function connectWebSocket() {
     // };
 
 
-    // socket.on('error', (error) => {
-    //     console.log("WebSocket Error Trying to reconnect");
-    //     socket.onclose();
-    // });
+    socket.on('error', (error) => {
+        console.log("WebSocket Error Trying to reconnect");
+        socket.onclose();
+    });
 }
