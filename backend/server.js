@@ -34,7 +34,7 @@ let roomCount = 1;
 
 
 app.get('/', (req, res) => {
-    console.log("server running");
+    res.send("Server is live");
 })
 
 
