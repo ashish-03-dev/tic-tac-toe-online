@@ -33,14 +33,12 @@ const players = {};
 let roomCount = 1;
 
 
-app.get('/',(req,res)=>{
+app.get('/', (req, res) => {
     console.log("server running");
 })
 
 
 // Handle Player Disconnections
-
-
 // function handleDisconnection(socket) {
 //     socket.on('disconnect', () => {
 //         console.log(`Player disconnected: ${socket.id}`);
@@ -56,22 +54,6 @@ app.get('/',(req,res)=>{
 //         }
 //     })
 // }
-
-
-
-
-// Handle Message
-function handlePlayerMessage(socket) {
-    //Listen for messages(ping) from the client
-
-    socket.on('message', (message) => {
-        // let data = JSON.parse(message);
-
-        // if (data.type === 'ping') {
-        //     socket.emit(JSON.stringify({ type: 'pong' })); // Reply to Pong
-        // }
-    });
-}
 
 // Reset Board
 function resetBoard(game) {
@@ -159,7 +141,7 @@ function handlePlayerMove(socket) {
 }
 
 // Handle Round Calling
-function handleRound(game, roomId) {
+async function handleRound(game, roomId) {
 
     const room = rooms[roomId];
 
@@ -197,6 +179,7 @@ function handlePlayerName(socket) {
     socket.on('username', (username) => {
         const roomId = getRoomId(socket);
         const room = rooms[roomId];
+        username = username.trim().split(" ")[0];
         room.playerNames.push(username);
 
         if (room.playerNames.length === 2) {
@@ -204,7 +187,7 @@ function handlePlayerName(socket) {
             let s1 = (s2 == "X" ? "O" : "X");
             //other player who joined earlier
             socket.to(roomId).emit('gameData', { symbol: s1, opponentName: username || "Anonymous" });
-            socket.emit('gameData', { symbol: s2, opponentName: room.playerNames[0] || "Anonymous"});
+            socket.emit('gameData', { symbol: s2, opponentName: room.playerNames[0] || "Anonymous" });
         }
     })
 }
@@ -289,7 +272,6 @@ io.on('connection', (socket) => {
     handlePlayerName(socket);
     handleStartRound(socket);
     handlePlayerMove(socket);
-    handlePlayerMessage(socket);
     // handleDisconnection(socket);
 
     // tell server a client is disconnected
@@ -302,4 +284,4 @@ io.on('connection', (socket) => {
 
 console.log('WebSocket server running on ws')
 
-server.listen(PORT,()=> console.log(`Server Started at: ${PORT}`));
+server.listen(PORT, () => console.log(`Server Started at: ${PORT}`));
