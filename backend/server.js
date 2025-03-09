@@ -183,8 +183,8 @@ function handlePlayerName(socket) {
         room.playerNames.push(username);
 
         if (room.playerNames.length === 2) {
-            let s2 = (socket.id == room.players[0] ? "X" : "O");
-            let s1 = (s2 == "X" ? "O" : "X");
+            let s1 = "X";
+            let s2 = "O";
             //other player who joined earlier
             socket.to(roomId).emit('gameData', { symbol: s1, opponentName: username || "Anonymous" });
             socket.emit('gameData', { symbol: s2, opponentName: room.playerNames[0] || "Anonymous" });
@@ -192,7 +192,7 @@ function handlePlayerName(socket) {
     })
 }
 
-// assign Room and bth player connected
+// assign Room and both player connected
 function assignRoom(socket) {
     let assignedRoom = null;
 
