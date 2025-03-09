@@ -152,8 +152,11 @@ function updateTurn(turn) {
 
 
 async function setName(opponentName) {
-    const yourName = document.getElementById("username").value.toUpperCase();
-    scoreBoard.querySelector("#player1").innerText = `${yourName || "ANONYMOUS"}`;
+    let yourName = document.getElementById("username").value.toUpperCase();
+    if(!yourName.trim()) fullName = "";
+    let username = yourName.trim().split(" ")[0];
+    
+    scoreBoard.querySelector("#player1").innerText = `${username || "ANONYMOUS"}`;
     scoreBoard.querySelector("#player2").innerText = `${opponentName}`;
 };
 
@@ -343,7 +346,9 @@ nameBoard.querySelector(".submit").addEventListener('click', async () => {
 });
 
 async function sendName() {
-    const username = document.getElementById("username").value.toUpperCase();
+    let fullName = document.getElementById("username").value.toUpperCase();
+    if(!fullName.trim()) fullName = "";
+    let username = fullName.trim().split(" ")[0];
     socket.emit('username', username);
 }
 
