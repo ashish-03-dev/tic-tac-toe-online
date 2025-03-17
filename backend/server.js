@@ -71,7 +71,7 @@ function changeTurn(roomId) {
 }
 
 // Display Turn
-function displayTurn(roomId) {
+async function updateYourTurn(roomId) {
     io.to(roomId).emit('turn', rooms[roomId].turn);
 }
 
@@ -102,7 +102,7 @@ function handleCheckWinner(game, roomId, boxKey) {
         changeTurn(roomId);
     } else {
         changeTurn(roomId);
-        displayTurn(roomId);
+        updateYourTurn(roomId);
     }
 }
 
@@ -149,7 +149,9 @@ async function handleRound(game, roomId) {
 
     io.to(roomId).emit('callRound', room.roundNumber);
     game.roundNumber++; // increase roundNumber
-    displayTurn(roomId);
+    setTimeout(async () => {
+        await updateYourTurn(roomId);
+    }, 1500);
 }
 
 // Handle Ready State
