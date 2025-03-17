@@ -382,5 +382,4 @@ export {
     resetGame,
     upShadow,
     closeGame,
-    sendName,
 }

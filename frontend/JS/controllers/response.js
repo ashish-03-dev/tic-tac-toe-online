@@ -27,7 +27,6 @@ import { delay,
     resetGame,
     upShadow,
     closeGame,
-    sendName,
 } from './ui.js';
 
 import {sendReady, sendUserName} from "../connect.js";
