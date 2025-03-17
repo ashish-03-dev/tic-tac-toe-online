@@ -1,33 +1,35 @@
+import { connectWebSocket, joinRoom, makeMove} from '../connect.js';
 
 let turnP;
 let symbol;
 let boxSymbol;
 let yourSymbol;
 let opponentSymbol;
-
 let roundNumber = 1;
-let playerOWin = 0;
-let playerXWin = 0;
-let isValidMove = false;
 
-const loader = document.querySelector(".loading-container");
-const heading = document.querySelector(".heading");
-const server = document.querySelector(".server");
+
 const game = document.querySelector(".game");
 const board = document.querySelector(".board");
 const draw = document.querySelector(".drawBoard");
 const winner = document.querySelector(".winner");
 const round = document.querySelector(".round");
-const replay = document.querySelector(".replay");
 const turnBoard = document.querySelector(".turn");
 const symbolX = '<i class="fa-solid fa-xmark"></i>';
 const symbolO = '<i class="fa-regular fa-circle"></i>';
 const scoreBoard = document.querySelector(".scoreBoard");
+
+
+const boxNodes = document.querySelectorAll(".box");
 const nameBoard = document.querySelector(".nameBoard");
 const waiting = document.querySelector(".waiting");
+const replay = document.querySelector(".replay");
+const loader = document.querySelector(".loading-container");
+const heading = document.querySelector(".heading");
+const server = document.querySelector(".server");
 
-document.addEventListener("DOMContentLoaded", async function () {
 
+
+async function handlePageLoaded() {
     await delay(5000);//given time to load
 
     await fadeOut(loader, 200);// fade out loader
@@ -38,7 +40,30 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     disableBoxes();
     connectWebSocket();
-})
+}
+
+
+async function handleBoxClick(evt) {  // Every Click
+    const position = evt.target.closest(".box").id;
+    const box = evt.target.closest('.box');
+    if (turnP)
+        // if validated then make move will emit
+        checkBox(box, position);
+}
+
+
+async function handleSubmitName() {
+    await fadeOut(nameBoard, 200);
+    appearBlock(waiting, 400);
+    joinRoom(); // from socket Connect
+}
+
+
+async function handleRestartGame() {
+    await fadeOut(replay, 320);
+    connectWebSocket(); // connect to server
+}
+
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -114,7 +139,8 @@ async function gameAppear() {
 }
 
 // RoundBoard
-async function callRoundBoard() {
+async function callRoundBoard(n) {
+    roundNumber = n;
     let str = `<p><i>Round ${roundNumber}</i></p>`;
     round.innerHTML = str;
 
@@ -153,9 +179,9 @@ function updateTurn(turn) {
 
 async function setName(opponentName) {
     let yourName = document.getElementById("username").value.toUpperCase();
-    if(!yourName.trim()) fullName = "";
+    if (!yourName.trim()) fullName = "";
     let username = yourName.trim().split(" ")[0];
-    
+
     scoreBoard.querySelector("#player1").innerText = `${username || "ANONYMOUS"}`;
     scoreBoard.querySelector("#player2").innerText = `${opponentName}`;
 };
@@ -166,17 +192,6 @@ function setScoreNumber(score) {
     let s2 = document.querySelector("#player2Win");
     s2.innerText = score[symbol == "X" ? "O" : "X"];
 }
-
-// Every Click
-const boxNodes = document.querySelectorAll(".box");
-boxNodes.forEach((box) => {
-    box.onclick = async (evt) => {
-        let position = evt.target.closest(".box").id;
-        if (turnP)
-            // if validated then make move will emit
-            checkBox(box, position);
-    }
-});
 
 // Player Move check and emit
 async function checkBox(box, position) {
@@ -332,135 +347,40 @@ async function closeGame() { // remove from server
     appearBlock(replay, 300); // call replay Board
 }
 
-replay.addEventListener("click", async function restartGame() {
-    await fadeOut(replay, 320);
-    connectWebSocket(); // connect to server
-});
 
 
-// Submit Name
-nameBoard.querySelector(".submit").addEventListener('click', async () => {
-    await fadeOut(nameBoard, 200);
-    appearBlock(waiting, 400);
-    socket.emit('joinRoom'); // ask to join Room
-});
-
-async function sendName() {
-    let fullName = document.getElementById("username").value.toUpperCase();
-    if(!fullName.trim()) fullName = "";
-    let username = fullName.trim().split(" ")[0];
-    socket.emit('username', username);
-}
-
-
-// Online Connection
-
-let socket = null;
-let reconnectAttempts = 0;
-
-
-// Sending a move
-function makeMove(n) {
-    // send move to server
-    socket.emit('move', { position: n });
-};
-
-
-// connect Online
-function connectWebSocket() {
-
-    socket = io("https://onlinetictactoe-yf4j.onrender.com");
-
-    // When Connected
-    socket.on('connect', async () => {
-        await delay(1000);
-        await fadeOut(server, 400);
-        // reconnectAttempts = 0;
-        appearFlex(nameBoard, 200);
-    });
-
-    // Both Player
-    socket.on('playerJoined', async () => {
-        await sendName();
-    })
-
-
-    // listen for symbol
-    socket.on('gameData', async (data) => {
-        await updateSymbol(data.symbol);
-        await setName(data.opponentName);
-        await delay(1000);
-        await fadeOut(waiting, 200);
-        await gameAppear();
-        socket.emit('ready');
-    });
-
-    // Recieving Turn
-    socket.on('turn', (turn) => {
-        updateTurn(turn); // if players turn then below statement
-    });
-
-    // Server send Score after Round
-    socket.on('score', (score) => {
-        setScoreNumber(score)
-    });
-
-    // Round Call
-    socket.on('callRound', (n) => {
-        roundNumber = n;
-        callRoundBoard();
-    })
-
-    // Process Opponent Move
-    socket.on('opponentMove', (moveData) => {
-        opponentMove(moveData.position);
-    });
-
-    // When Server send Round Results
-    socket.on('roundOver', async (data) => {
-        disableBoxes();
-        hideTurnArea();
-        // if winner only show winner animation else proper draw Board
-        if (data.status === "win") {
-            await showWinnerEffect(data.list);
-        }
-        else if (data.status === "draw")
-            await openDraw();
-
-        await delay(1000); // 300ms for reset Shadows
-        socket.emit('ready');
-    });
-
-    // When Server Send Gameover
-    socket.on('gameOver', (data) => {
-        showWinnerBoard(data); // either "X" or "Y"
-    });
-
-    // when Wrong Move sent by client after manipulation
-    socket.on('wrongMove', () => { wrongMove() });
-
-    // When Disconnected
-    // socket.on('disconnect'), () => {
-    //     console.log("Disconnected from Server");
-
-    //     socket = null;
-
-    //     document.querySelector(".play").style.display = "block";
-    //     document.querySelector(".leaveOnline").style.display = "none";
-
-    //     if (reconnectAttempts <= 3) {
-    //         console.log("Reconnecting...");
-
-    //         // Trying to reconnect after an Increasing delay
-    //         let delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
-    //         setTimeout(connectWebSocket, delay);
-    //         reconnectAttempts++;
-    //     }
-    // };
-
-
-    socket.on('error', (error) => {
-        console.log("WebSocket Error Trying to reconnect");
-        socket.onclose();
-    });
+export {
+    handlePageLoaded,
+    handleSubmitName,
+    handleRestartGame,
+    handleBoxClick,
+    delay,
+    appearFlex,
+    appearBlock,
+    fadeOut,
+    enableBoxes,
+    disableBoxes,
+    updateSymbol,
+    gameAppear,
+    callRoundBoard,
+    showTurnArea,
+    hideTurnArea,
+    updateTurn,
+    setName,
+    setScoreNumber,
+    checkBox,
+    opponentMove,
+    fillBox,
+    insetShadow,
+    wrongMove,
+    boxUnavailable,
+    zoomInBoxes,
+    showWinnerEffect,
+    openDraw,
+    showWinnerBoard,
+    writeWinner,
+    resetGame,
+    upShadow,
+    closeGame,
+    sendName,
 }
