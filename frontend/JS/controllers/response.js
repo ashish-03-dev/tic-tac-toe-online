@@ -1,4 +1,3 @@
-
 import { delay,
     appearFlex,
     appearBlock,
@@ -40,32 +39,6 @@ const heading = document.querySelector(".heading");
 const server = document.querySelector(".server");
 
 
-function handleConnect() {
-    return async () => {
-        await delay(1000);
-        await fadeOut(server, 400);
-        // reconnectAttempts = 0;
-        appearFlex(nameBoard, 200);
-    }
-}
-function handlePlayerJoined() {
-    return async () => {
-        let fullName = document.getElementById("username").value.toUpperCase();
-        if (!fullName.trim()) fullName = "";
-        let username = fullName.trim().split(" ")[0];
-        sendUserName(username);
-    }
-}
-function handleGameData() {
-    return async (data) => {
-        await updateSymbol(data.symbol);
-        await setName(data.opponentName);
-        await delay(1000);
-        await fadeOut(waiting, 200);
-        await gameAppear();
-        sendReady();
-    }
-}
 function handleUpdateTurn() {
     return async (turn) => {
         updateTurn(turn); // if players turn then below statement
@@ -113,9 +86,6 @@ function handleWrongMove() {
 }
 
 export {
-    handleConnect,
-    handlePlayerJoined,
-    handleGameData,
     handleUpdateTurn,
     handleScoreNumber,
     handleRoundCall,

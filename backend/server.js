@@ -1,4 +1,57 @@
-// Server Connection
+const express = require('express');
+const http = require('http');
+const PORT = process.env.PORT || 3000;
+const { Server } = require('socket.io');
+const cookieParser = require('cookie-parser');
+const cookie = require("cookie");
+const cors = require('cors');
+
+let nanoid;
+(async () => {
+    const nanoidModule = await import('nanoid');
+    nanoid = nanoidModule.nanoid;
+})();
+const { v4: uuidv4 } = require('uuid');
+
+
+const app = express();
+const server = http.createServer(app);
+// const frontendURL = ["http://127.0.0.1:5500", "https://toe-online-wars.vercel.app/"];
+const frontendURL = "https://toe-online-wars.vercel.app/";
+const io = new Server(server, {
+    cors: {
+        origin: frontendURL,
+        methods: ["GET", "POST"],
+        credentials: true,
+    }
+});
+
+
+app.use(cors({ origin: frontendURL, credentials: true }));
+app.use(cookieParser());
+
+
+app.get('/', (req, res) => {
+    res.send("Server is live");
+})
+app.get('/set-cookie', (req, res) => {
+    let userId = req.cookies.userId;
+
+    if (!userId) {
+        const sessionId = uuidv4();
+        res.cookie("userId", sessionId, {
+            maxAge: 86400000,
+            httpOnly: true,
+            secure:true,
+            // secure: false, // for local 
+            sameSite: "None",
+        })
+        console.log("new cookie sent\n")
+    }
+    res.send({ "UserId:": userId });
+})
+
+
 
 // handled on the server to maintain fairness and prevent cheating. 
 const winPatterns = [
@@ -12,48 +65,10 @@ const winPatterns = [
     [6, 7, 8]
 ];
 
-
-
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const PORT = process.env.PORT || 3000;
-
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
-});
-
 let rooms = {};
 const players = {};
 let roomCount = 1;
-
-
-app.get('/', (req, res) => {
-    res.send("Server is live");
-})
-
-
-// Handle Player Disconnections
-// function handleDisconnection(socket) {
-//     socket.on('disconnect', () => {
-//         console.log(`Player disconnected: ${socket.id}`);
-
-//         // Find and remove player from room
-//         const roomId = getRoomId(socket);
-//         if (roomId && rooms[roomId]) {
-//             rooms[roomId].players = rooms[roomId].players.filter(id => id !== socket.id);
-//             if (rooms[roomId].players.length === 0)
-//                 delete rooms[roomId]; // Remove empty rooms
-//             else
-//                 io.to(roomId).emit("playerLeft", { message: "your Opponent Left" });
-//         }
-//     })
-// }
+let userSocketMap = {};
 
 // Reset Board
 function resetBoard(game) {
@@ -117,13 +132,13 @@ function handlePlayerMove(socket) {
 
         const game = rooms[roomId];
 
-        const playerIndex = game.players.indexOf(socket.id);
+        const playerIndex = game.users.indexOf(socket.data.userId);
         if (playerIndex === -1) return; // PLayer not in this room
 
         let index = Number(moveData.position);
 
         if (!game) return;
-        if (game.board[index] === null && socket.id === game.players[game.turn === "X" ? 0 : 1]) {
+        if (game.board[index] === null && socket.data.userId === game.users[game.turn === "X" ? 0 : 1]) {
             game.board[index] = game.turn;
             let boxKey = playerIndex == 0 ? "X" : "O";
             game.playerBoxes[boxKey].push(index);
@@ -140,6 +155,39 @@ function handlePlayerMove(socket) {
     })
 }
 
+
+// Handle Player Disconnections
+function handleDisconnection(socket) {
+    socket.on('disconnecting', () => {
+        // Find and remove player from room
+        const roomId = getRoomId(socket);
+        console.log(`Player disconnected: ${socket.id} from Room: ${roomId}`);
+        const room = rooms[roomId];
+        if (roomId && room) {
+            room.activeUsers = room.activeUsers.filter(id => id !== socket.data.userId);
+            if (room.activeUsers.length === 0) {
+                delete rooms[roomId]; // Remove empty rooms
+                console.log("room deleted");
+            }
+            // else
+            // io.to(roomId).emit("playerLeft", { message: "your Opponent Left" });
+        }
+    })
+}
+
+// handle clear room
+async function handleClearRoom(roomId) {
+    //disconnecting both
+    io.of('/').in(roomId).fetchSockets().then((sockets) => {
+        // console.log("Sockets :", sockets);
+        sockets.forEach((socket) => {
+            socket.disconnect(true);
+        })
+    }).catch((err) => {
+        console.log("Error Disconnecting Socket", err);
+    })
+}
+
 // Handle Round Calling
 async function handleRound(game, roomId) {
 
@@ -148,10 +196,11 @@ async function handleRound(game, roomId) {
     console.log("Round Board emitted");
 
     io.to(roomId).emit('callRound', room.roundNumber);
+    room.gameStarted = true;
     game.roundNumber++; // increase roundNumber
     setTimeout(async () => {
-        await updateYourTurn(roomId);
-    }, 1500);
+        updateYourTurn(roomId);
+    }, 1300);
 }
 
 // Handle Ready State
@@ -171,61 +220,59 @@ function handleStartRound(socket) {
                 else if (game.playerOWin > game.playerXWin) winner = "O";
                 else winner = "X";
                 io.to(roomId).emit('gameOver', winner);
-                return;
+                handleClearRoom(roomId); // clear room
             }
         }
     })
 }
 
+
+function generateGameData(userId) {
+    const roomId = findRoom(userId);
+    const room = rooms[roomId];
+    const symbol = room.users[0] === userId ? "X" : "O";
+
+    const username = room.playerNames.find(player => player.userId === userId)?.username;
+    const opponentName = room.playerNames.find(player => player.userId !== userId)?.username;
+
+    return { symbol, names: { username: username || "Anonymous", opponentName: opponentName || "Anonymous" } };
+}
+
 function handlePlayerName(socket) {
     socket.on('username', (username) => {
+        const userId = socket.data.userId;
         const roomId = getRoomId(socket);
         const room = rooms[roomId];
         username = username.trim().split(" ")[0];
-        room.playerNames.push(username);
+        room.playerNames.push({ userId, username });
 
         if (room.playerNames.length === 2) {
             let s1 = "X";
             let s2 = "O";
-            //other player who joined earlier
-            socket.to(roomId).emit('gameData', { symbol: s1, opponentName: username || "Anonymous" });
-            socket.emit('gameData', { symbol: s2, opponentName: room.playerNames[0] || "Anonymous" });
+
+            const userId1 = room.users[0];
+            const userId2 = room.users[1];
+
+            const socket1 = userSocketMap[userId1];
+            const socket2 = userSocketMap[userId2];
+
+            const gameData1 = generateGameData(userId1);
+            const gameDate2 = generateGameData(userId2);
+
+            io.to(socket1).emit('gameData', gameData1);
+            io.to(socket2).emit('gameData', gameDate2);
         }
     })
 }
 
-// assign Room and both player connected
-function assignRoom(socket) {
-    let assignedRoom = null;
-
-    //  first check if socket is connected to any room
-    if (socket.rooms.size > 1) return;
-
-    //Find an existing Room with space for a second player
-    for (let roomId in rooms) {
-        if (rooms[roomId].players.length === 1) {
-            assignedRoom = roomId;
-            break;
+// find room
+function findRoom(userId) {
+    for (const roomId in rooms) {
+        if (rooms[roomId].users.includes(userId)) {
+            return roomId;
         }
     }
-
-    // If no available room, create a room
-    if (!assignedRoom) {
-        assignedRoom = generateRoomId();
-        createRoom(assignedRoom);
-        console.log("room created")
-    }
-
-    // Join the room
-    socket.join(assignedRoom);
-    const room = rooms[assignedRoom];
-    room.players.push(socket.id);
-    console.log(`${socket.id} joined ${assignedRoom}\n`);
-
-    if (room.players.length == 2) {
-        // Two players joined
-        io.to(assignedRoom).emit('playerJoined');
-    }
+    return null;
 }
 
 // Get roomId
@@ -236,15 +283,17 @@ function getRoomId(socket) {
 
 // Generate New Room Id
 function generateRoomId() {
-    return `room-${roomCount++}`;
+    return nanoid(7);
 }
 
 // Function to initialise  a new room
 function createRoom(roomId) {
     rooms[roomId] = {
         board: Array(9).fill(null),
-        players: [],
+        users: [],
         playerNames: [],
+        activeUsers: [],
+        gameStarted: false,
         winner: null,
         turn: "X", // or true
         roundNumber: 1,
@@ -258,31 +307,114 @@ function createRoom(roomId) {
 
 // Handle Join room
 function handleJoinRoom(socket) {
-    // If reconnecting we work with roomId
     socket.on('joinRoom', () => {
-        // Assign room to Players
-        console.log("Player asked to join game");
-        assignRoom(socket);
+        console.log("Player asked to join game"); // Assign room to Players
+
+        let assignedRoom = null;
+
+        //  first check if socket is connected to any room
+        if (socket.rooms.size > 1) return;
+
+        //Find an existing Room with space for a second player
+        for (let roomId in rooms) {
+            if (rooms[roomId].users.length === 1) {
+                assignedRoom = roomId;
+                break;
+            }
+        }
+
+        // If no available room, create a room
+        if (!assignedRoom) {
+            assignedRoom = generateRoomId();
+            createRoom(assignedRoom);
+            console.log("room created")
+        }
+
+        // Join the room
+        socket.join(assignedRoom);
+        const room = rooms[assignedRoom];
+        room.users.push(socket.data.userId);
+        room.activeUsers.push(socket.data.userId);
+        console.log(`${socket.id} joined ${assignedRoom}\n`);
+
+
+        if (room.users.length == 2) {
+            // Two players joined
+            io.to(assignedRoom).emit('playerJoined');
+        }
     })
 }
 
-// On New Connection
-io.on('connection', (socket) => {
-    console.log('New client connected', socket.id);
+//handle ready to resume
+function handleGameResume(socket) {
+    socket.on('readyResume', () => {
+        const roomId = getRoomId(socket);
+        const room = rooms[roomId];
+        room.activeUsers = room.activeUsers.filter(id => id !== socket.data.userId);
+        room.activeUsers.push(socket.data.userId);
+        if (room.activeUsers.length === 2) {
+            updateYourTurn(roomId);
+            socket.emit('removeBlockage');
+            socket.to(roomId).emit('removeWaitingForOpponent');
+        }
+    });
+}
 
+// tell user if previous game is exist or new game
+function handleGameState(socket) {
+    socket.on('tellme', () => {
+        const userId = socket.data.userId;
+
+        const roomId = findRoom(userId);
+
+        let gameState;
+        if (roomId) {
+            const room = rooms[roomId];
+
+            const gameData = generateGameData(userId);
+            gameData.playerBoxes = room.playerBoxes;
+            gameData.score = { "X": room.playerXWin, "O": room.playerOWin };
+
+            gameState = { mode: "resume", gameData };
+            socket.join(roomId);
+            room.activeUsers = room.activeUsers.filter(id => id !== socket.data.userId);
+            room.activeUsers.push(socket.data.userId);
+            console.log("Previous room assigned")
+            console.log(room);
+        } else {
+            gameState = { mode: 'new' }
+        }
+
+        socket.emit('game', gameState);
+    })
+}
+
+//  Handle Cookie
+function handleCookie(socket) {
+    const cookies = socket.handshake.headers.cookie ?
+        cookie.parse(socket.handshake.headers.cookie) : null;
+    console.log("Cookies Recieved in WebSocket ", cookies);
+    const userId = cookies.userId;
+    socket.data.userId = userId;
+
+    userSocketMap[userId] = socket.id; //  map socket id with userId;
+}
+
+// On New Connection
+io.on('connection', async (socket) => {
+    console.log('New client connected', socket.id);
+    handleCookie(socket);
+    handleGameState(socket);
+    handleGameResume(socket);
     handleJoinRoom(socket);
     handlePlayerName(socket);
     handleStartRound(socket);
     handlePlayerMove(socket);
-    // handleDisconnection(socket);
-
-    // tell server a client is disconnected
-    io.on('disconnect', () => console.log('client disconnected'));
+    handleDisconnection(socket);
 
     // tell server about error
     io.on('error', (error) => console.error("websocket error:", error));
 });
-
 
 console.log('WebSocket server running on ws')
 

@@ -1,4 +1,4 @@
-import { connectWebSocket, joinRoom, makeMove} from '../connect.js';
+import { connectServer, connectWebSocket, joinRoom, makeMove,sendReadyToResume } from '../connect.js';
 
 let turnP;
 let symbol;
@@ -22,6 +22,7 @@ const scoreBoard = document.querySelector(".scoreBoard");
 const boxNodes = document.querySelectorAll(".box");
 const nameBoard = document.querySelector(".nameBoard");
 const waiting = document.querySelector(".waiting");
+const resume = document.querySelector('.resume');
 const replay = document.querySelector(".replay");
 const loader = document.querySelector(".loading-container");
 const heading = document.querySelector(".heading");
@@ -30,6 +31,7 @@ const server = document.querySelector(".server");
 
 
 async function handlePageLoaded() {
+    console.log("page load called");
     await delay(5000);//given time to load
 
     await fadeOut(loader, 200);// fade out loader
@@ -39,7 +41,7 @@ async function handlePageLoaded() {
     await appearBlock(server, 400); // make server appear
 
     disableBoxes();
-    connectWebSocket();
+    connectServer();
 }
 
 
@@ -58,6 +60,45 @@ async function handleSubmitName() {
     joinRoom(); // from socket Connect
 }
 
+async function resumeGame(gameData) {
+    console.log("resume Game called")
+    updateSymbol(gameData.symbol);
+    setName(gameData.names);
+    setScoreNumber(gameData.score);
+    await updateBox(gameData.playerBoxes);
+
+    await appearBlock(resume, 400);
+    await delay(1500);
+    await fadeOut(resume, 400);
+    await gameAppear();
+    sendReadyToResume();
+}
+
+function newGame() {
+    appearFlex(nameBoard, 200);
+}
+
+function removeBlockage(){
+
+}
+function removeWait(){
+
+}
+
+async function updateBox(playerBoxes){
+    updateTurn("X");
+    playerBoxes["X"].forEach(id =>{
+        id = String(id);
+        const b = document.getElementById(id);
+        fillBox(b);
+    })
+    updateTurn("O");
+    playerBoxes["O"].forEach(id =>{
+        id = String(id);
+        const b = document.getElementById(id);
+        fillBox(b);
+    })
+}
 
 async function handleRestartGame() {
     await fadeOut(replay, 320);
@@ -177,13 +218,9 @@ function updateTurn(turn) {
 }
 
 
-async function setName(opponentName) {
-    let yourName = document.getElementById("username").value.toUpperCase();
-    if (!yourName.trim()) fullName = "";
-    let username = yourName.trim().split(" ")[0];
-
-    scoreBoard.querySelector("#player1").innerText = `${username || "ANONYMOUS"}`;
-    scoreBoard.querySelector("#player2").innerText = `${opponentName}`;
+async function setName(names) {
+    scoreBoard.querySelector("#player1").innerText = `${names.username}`;
+    scoreBoard.querySelector("#player2").innerText = `${names.opponentName}`;
 };
 
 function setScoreNumber(score) {
@@ -354,6 +391,8 @@ export {
     handleSubmitName,
     handleRestartGame,
     handleBoxClick,
+    newGame,
+    resumeGame,
     delay,
     appearFlex,
     appearBlock,
@@ -382,4 +421,6 @@ export {
     resetGame,
     upShadow,
     closeGame,
+    removeBlockage,
+    removeWait
 }

@@ -102,6 +102,16 @@ body {
     margin-top: 8px;
 }
 
+.resume{
+    font-size: 2rem;
+    color: #8e5572;
+    font-weight: 800;
+    margin-top: 10px;
+    opacity: 0;
+    display: none;
+    transition: opacity 0.4s;
+}
+
 .nameBoard {
     width: 300px;
     border-radius: 10px;
