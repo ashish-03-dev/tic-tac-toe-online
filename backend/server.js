@@ -16,7 +16,7 @@ const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 const server = http.createServer(app);
-// const frontendURL = ["http://127.0.0.1:5500", "https://toe-online-wars.vercel.app/"];
+// const frontendURL = "http://127.0.0.1:5500";
 const frontendURL = "https://toe-online-wars.vercel.app/";
 const io = new Server(server, {
     cors: {
