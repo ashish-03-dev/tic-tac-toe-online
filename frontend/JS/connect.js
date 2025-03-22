@@ -30,8 +30,9 @@ import {
     closeGame,
     newGame,
     resumeGame,
-    removeWait,
-    removeBlockage,
+    playerLeft,
+    removeWaiting,
+    // removeBlockage,
 } from './controllers/ui.js';
 
 
@@ -65,6 +66,9 @@ const loader = document.querySelector(".loading-container");
 const heading = document.querySelector(".heading");
 const server = document.querySelector(".server");
 
+function disconnectSocket(){
+    socket.close();
+}
 
 function handlePlayerJoined() {
     return async () => {
@@ -74,6 +78,19 @@ function handlePlayerJoined() {
         sendUserName(username);
     }
 }
+const handleResumeGame = () => {
+    showTurnArea();
+}
+
+const handleRemoveWaiting = () => {
+    removeWaiting();
+}
+
+const handlePlayerLeft = ()=>{
+    playerLeft();
+}
+
+
 function handleGameData() {
     return async (data) => {
         await updateSymbol(data.symbol);
@@ -141,9 +158,11 @@ async function connectWebSocket() {
 
     socket.on('gameData', handleGameData());   // listen for symbol
 
-    socket.on('removeBlockage', removeBlockage);
+    socket.on('playerLeft',handlePlayerLeft);
 
-    socket.on('removeWaitingForOpponent',removeWait);
+    socket.on('resumeGame', handleResumeGame);
+
+    socket.on('removeWaiting', handleRemoveWaiting);
 
     socket.on('turn', handleUpdateTurn());   // Recieving Turn
 
@@ -184,4 +203,4 @@ async function connectWebSocket() {
     // };
 }
 
-export { connectServer, connectWebSocket, joinRoom, sendUserName, sendReadyToResume, sendReady, makeMove }
+export { connectServer, connectWebSocket, joinRoom, sendUserName, sendReadyToResume, sendReady, makeMove,disconnectSocket }

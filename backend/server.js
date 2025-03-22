@@ -42,7 +42,7 @@ app.get('/set-cookie', (req, res) => {
         res.cookie("userId", sessionId, {
             maxAge: 86400000,
             httpOnly: true,
-            secure:true,
+            secure: true,
             // secure: false, // for local 
             sameSite: "None",
         })
@@ -159,6 +159,8 @@ function handlePlayerMove(socket) {
 // Handle Player Disconnections
 function handleDisconnection(socket) {
     socket.on('disconnecting', () => {
+
+        delete userSocketMap[socket.data.userId];
         // Find and remove player from room
         const roomId = getRoomId(socket);
         console.log(`Player disconnected: ${socket.id} from Room: ${roomId}`);
@@ -169,8 +171,8 @@ function handleDisconnection(socket) {
                 delete rooms[roomId]; // Remove empty rooms
                 console.log("room deleted");
             }
-            // else
-            // io.to(roomId).emit("playerLeft", { message: "your Opponent Left" });
+            else
+                socket.to(roomId).emit('playerLeft');
         }
     })
 }
@@ -208,6 +210,7 @@ function handleStartRound(socket) {
     socket.on('ready', () => {
         const roomId = getRoomId(socket);
         const game = rooms[roomId];
+        game.ready = game.ready.filter(socketId => socketId !== socket.id);
         game.ready.push(socket.id);
         if (game.ready.length === 2) {
 
@@ -354,8 +357,8 @@ function handleGameResume(socket) {
         room.activeUsers.push(socket.data.userId);
         if (room.activeUsers.length === 2) {
             updateYourTurn(roomId);
-            socket.emit('removeBlockage');
-            socket.to(roomId).emit('removeWaitingForOpponent');
+            socket.emit('resumeGame');
+            socket.to(roomId).emit('removeWaiting');
         }
     });
 }
@@ -394,10 +397,14 @@ function handleCookie(socket) {
     const cookies = socket.handshake.headers.cookie ?
         cookie.parse(socket.handshake.headers.cookie) : null;
     console.log("Cookies Recieved in WebSocket ", cookies);
-    const userId = cookies.userId;
-    socket.data.userId = userId;
-
-    userSocketMap[userId] = socket.id; //  map socket id with userId;
+    try {
+        const userId = cookies.userId;
+        socket.data.userId = userId;
+        userSocketMap[userId] = socket.id; //  map socket id with userId;
+    } catch (error) {
+        console.log("Error handling Cookie:", error.message);
+        socket.disconnect();
+    }
 }
 
 // On New Connection

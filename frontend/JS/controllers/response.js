@@ -28,7 +28,7 @@ import { delay,
     closeGame,
 } from './ui.js';
 
-import {sendReady, sendUserName} from "../connect.js";
+import {sendReady, sendUserName, disconnectSocket} from "../connect.js";
 
 const boxNodes = document.querySelectorAll(".box");
 const nameBoard = document.querySelector(".nameBoard");
@@ -44,6 +44,7 @@ function handleUpdateTurn() {
         updateTurn(turn); // if players turn then below statement
     }
 }
+
 function handleRoundCall() {
     return async (n) => {
         callRoundBoard(n);
@@ -77,6 +78,7 @@ function handleRoundOver() {
 function handleGameOver() {
     return async (data) => {
         showWinnerBoard(data); // either "X" or "Y"
+        disconnectSocket();
     }
 }
 function handleWrongMove() {

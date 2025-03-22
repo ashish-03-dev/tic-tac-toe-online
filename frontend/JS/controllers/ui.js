@@ -1,4 +1,4 @@
-import { connectServer, connectWebSocket, joinRoom, makeMove,sendReadyToResume } from '../connect.js';
+import { connectServer, connectWebSocket, joinRoom, makeMove, sendReadyToResume } from '../connect.js';
 
 let turnP;
 let symbol;
@@ -27,7 +27,7 @@ const replay = document.querySelector(".replay");
 const loader = document.querySelector(".loading-container");
 const heading = document.querySelector(".heading");
 const server = document.querySelector(".server");
-
+const leftBoard = document.querySelector('.playerLeft');
 
 
 async function handlePageLoaded() {
@@ -60,6 +60,15 @@ async function handleSubmitName() {
     joinRoom(); // from socket Connect
 }
 
+function removeWaiting() {
+    fadeOut(leftBoard, 200);
+}
+
+function playerLeft() {
+    appearBlock(leftBoard, 200);
+    disableBoxes();
+}
+
 async function resumeGame(gameData) {
     console.log("resume Game called")
     updateSymbol(gameData.symbol);
@@ -78,22 +87,16 @@ function newGame() {
     appearFlex(nameBoard, 200);
 }
 
-function removeBlockage(){
 
-}
-function removeWait(){
-
-}
-
-async function updateBox(playerBoxes){
+async function updateBox(playerBoxes) {
     updateTurn("X");
-    playerBoxes["X"].forEach(id =>{
+    playerBoxes["X"].forEach(id => {
         id = String(id);
         const b = document.getElementById(id);
         fillBox(b);
     })
     updateTurn("O");
-    playerBoxes["O"].forEach(id =>{
+    playerBoxes["O"].forEach(id => {
         id = String(id);
         const b = document.getElementById(id);
         fillBox(b);
@@ -421,6 +424,6 @@ export {
     resetGame,
     upShadow,
     closeGame,
-    removeBlockage,
-    removeWait
+    playerLeft,
+    removeWaiting,
 }
