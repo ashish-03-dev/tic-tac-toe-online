@@ -1,4 +1,4 @@
-import { connectServer, connectWebSocket, joinRoom, makeMove, sendReadyToResume } from '../connect.js';
+import { connectServer, connectWebSocket, joinRoom, makeMove, sendReadyToResume } from './connect.js';
 
 let turnP;
 let symbol;
@@ -33,26 +33,19 @@ const leftBoard = document.querySelector('.playerLeft');
 async function handlePageLoaded() {
     console.log("page load called");
     await delay(5000);//given time to load
-
     await fadeOut(loader, 200);// fade out loader
-
     await appearFlex(heading, 400); // make heading appear and animation
-
     await appearBlock(server, 400); // make server appear
-
     disableBoxes();
     connectServer();
 }
-
 
 async function handleBoxClick(evt) {  // Every Click
     const position = evt.target.closest(".box").id;
     const box = evt.target.closest('.box');
     if (turnP)
-        // if validated then make move will emit
-        checkBox(box, position);
+        checkBox(box, position);     // if validated then make move will emit
 }
-
 
 async function handleSubmitName() {
     await fadeOut(nameBoard, 200);
@@ -60,13 +53,16 @@ async function handleSubmitName() {
     joinRoom(); // from socket Connect
 }
 
-function removeWaiting() {
-    fadeOut(leftBoard, 200);
+async function removeWaiting() {
+    await fadeOut(leftBoard, 200);
+    document.querySelector('.player2').classList.remove('showWaiting');
 }
 
-function playerLeft() {
-    appearBlock(leftBoard, 200);
+async function playerLeft() {
     disableBoxes();
+    document.querySelector('.player2').classList.add('showWaiting');
+    await delay(400);
+    appearBlock(leftBoard, 200);
 }
 
 async function resumeGame(gameData) {
@@ -87,7 +83,6 @@ function newGame() {
     appearFlex(nameBoard, 200);
 }
 
-
 async function updateBox(playerBoxes) {
     updateTurn("X");
     playerBoxes["X"].forEach(id => {
@@ -106,80 +101,6 @@ async function updateBox(playerBoxes) {
 async function handleRestartGame() {
     await fadeOut(replay, 320);
     connectWebSocket(); // connect to server
-}
-
-
-function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function appearFlex(node, ms) {
-    return new Promise(async resolve => {
-        node.style.display = "flex";
-
-        await delay(100);// give time for rendering display
-
-        node.style.opacity = "1";
-        node.style.visibility = "visible";
-
-        await delay(ms);//time for transition
-
-        resolve();
-    });
-}
-
-function appearBlock(node, ms) {
-    return new Promise(async resolve => {
-        node.style.display = "block";
-
-        await delay(100);// give time for rendering display
-
-        node.style.opacity = "1";
-        node.style.visibility = "visible";
-
-        await delay(ms);//time for transition
-
-        resolve();
-    });
-}
-
-function fadeOut(node, ms) {
-    return new Promise(async resolve => {
-
-        node.style.opacity = "0";
-
-        await delay(ms);//time for element to transition
-
-        node.style.display = "none";
-        node.style.visibility = "hidden";
-        resolve();
-    });
-}
-
-function enableBoxes() {
-    board.style.pointerEvents = "auto";
-}
-
-function disableBoxes() {
-    board.style.pointerEvents = "none";
-}
-
-async function updateSymbol(sym) {
-    if (sym === "X") {
-        symbol = "X";
-        yourSymbol = symbolX;
-        opponentSymbol = symbolO;
-    } else {
-        symbol = "O";
-        yourSymbol = symbolO;
-        opponentSymbol = symbolX;
-    }
-}
-
-// Game Function
-async function gameAppear() {
-    //make game appear
-    await appearFlex(game, 850);// 400 ms for appear
 }
 
 // RoundBoard
@@ -202,6 +123,13 @@ function hideTurnArea() {
     turnBoard.style.opacity = "0";
 }
 
+async function gameData(data) {
+    await updateSymbol(data.symbol);
+    await setName(data.names);
+    await delay(1000);
+    await fadeOut(waiting, 200);
+    await gameAppear();
+}
 
 // from server then here
 function updateTurn(turn) {
@@ -219,7 +147,6 @@ function updateTurn(turn) {
         boxSymbol = opponentSymbol;
     }
 }
-
 
 async function setName(names) {
     scoreBoard.querySelector("#player1").innerText = `${names.username}`;
@@ -306,6 +233,19 @@ async function zoomInBoxes(list) {
     }
 }
 
+async function roundOver(data) {
+    disableBoxes();
+    hideTurnArea();
+    // if winner only show winner animation else proper draw Board
+    if (data.status === "win") {
+        await showWinnerEffect(data.list);
+    }
+    else if (data.status === "draw") {
+        await delay(500);
+        await openDraw();
+    }
+    await delay(1000); // 300ms for reset Shadows
+}
 
 //from server
 async function showWinnerEffect(list) {
@@ -315,13 +255,10 @@ async function showWinnerEffect(list) {
     await delay(800);
     zoomInBoxes(list);
     await delay(700);
-
     // animation of which player won
-
     await delay(800); //given time to see board boxes
     resetGame();
 }
-
 
 async function openDraw() {
     await delay(500);
@@ -335,8 +272,7 @@ async function openDraw() {
     resetGame();
 }
 
-
-async function showWinnerBoard(data) { // from server
+async function gameOver(data) { // from server
     hideTurnArea();
     await writeWinner(data);
     await appearBlock(winner, 400);
@@ -370,13 +306,11 @@ function resetGame() {
     })
 }
 
-
 async function upShadow(box) {
     box.classList.remove("insetShadow");
     await delay(180);
     box.classList.remove("clicked");
 }
-
 
 async function closeGame() { // remove from server 
     await fadeOut(game, 400);
@@ -387,6 +321,77 @@ async function closeGame() { // remove from server
     appearBlock(replay, 300); // call replay Board
 }
 
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function appearFlex(node, ms) {
+    return new Promise(async resolve => {
+        node.style.display = "flex";
+
+        await delay(100);// give time for rendering display
+
+        node.style.opacity = "1";
+        node.style.visibility = "visible";
+
+        await delay(ms);//time for transition
+
+        resolve();
+    });
+}
+
+function appearBlock(node, ms) {
+    return new Promise(async resolve => {
+        node.style.display = "block";
+
+        await delay(100);// give time for rendering display
+
+        node.style.opacity = "1";
+        node.style.visibility = "visible";
+
+        await delay(ms);//time for transition
+
+        resolve();
+    });
+}
+
+function fadeOut(node, ms) {
+    return new Promise(async resolve => {
+
+        node.style.opacity = "0";
+
+        await delay(ms);//time for element to transition
+
+        node.style.display = "none";
+        node.style.visibility = "hidden";
+        resolve();
+    });
+}
+
+function enableBoxes() {
+    board.style.pointerEvents = "auto";
+}
+
+function disableBoxes() {
+    board.style.pointerEvents = "none";
+}
+
+async function updateSymbol(sym) {
+    if (sym === "X") {
+        symbol = "X";
+        yourSymbol = symbolX;
+        opponentSymbol = symbolO;
+    } else {
+        symbol = "O";
+        yourSymbol = symbolO;
+        opponentSymbol = symbolX;
+    }
+}
+
+// Game Function
+async function gameAppear() {
+    await appearFlex(game, 850);// 400 ms for appear
+}
 
 
 export {
@@ -394,36 +399,19 @@ export {
     handleSubmitName,
     handleRestartGame,
     handleBoxClick,
-    newGame,
-    resumeGame,
     delay,
-    appearFlex,
-    appearBlock,
     fadeOut,
-    enableBoxes,
-    disableBoxes,
-    updateSymbol,
-    gameAppear,
     callRoundBoard,
     showTurnArea,
-    hideTurnArea,
     updateTurn,
-    setName,
     setScoreNumber,
-    checkBox,
     opponentMove,
-    fillBox,
-    insetShadow,
     wrongMove,
-    boxUnavailable,
-    zoomInBoxes,
-    showWinnerEffect,
-    openDraw,
-    showWinnerBoard,
-    writeWinner,
-    resetGame,
-    upShadow,
-    closeGame,
+    newGame,
+    resumeGame,
     playerLeft,
     removeWaiting,
+    roundOver,
+    gameOver,
+    gameData,
 }

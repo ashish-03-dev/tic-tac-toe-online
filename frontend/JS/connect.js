@@ -1,121 +1,85 @@
 
 import {
     delay,
-    appearFlex,
-    appearBlock,
     fadeOut,
-    enableBoxes,
-    disableBoxes,
-    updateSymbol,
-    gameAppear,
     callRoundBoard,
-    showTurnArea,
-    hideTurnArea,
     updateTurn,
-    setName,
     setScoreNumber,
-    checkBox,
     opponentMove,
-    fillBox,
-    insetShadow,
     wrongMove,
-    boxUnavailable,
-    zoomInBoxes,
-    showWinnerEffect,
-    openDraw,
-    showWinnerBoard,
-    writeWinner,
-    resetGame,
-    upShadow,
-    closeGame,
     newGame,
     resumeGame,
     playerLeft,
     removeWaiting,
-    // removeBlockage,
-} from './controllers/ui.js';
+    roundOver,
+    gameOver,
+    gameData,
+    showTurnArea,
+} from './ui.js';
 
 
-import {
-    handleUpdateTurn,
-    handleScoreNumber,
-    handleRoundCall,
-    handleOpponentMove,
-    handleRoundOver,
-    handleGameOver,
-    handleWrongMove,
-} from "./controllers/response.js";
-
-const game = document.querySelector(".game");
-const board = document.querySelector(".board");
-const draw = document.querySelector(".drawBoard");
-const winner = document.querySelector(".winner");
-const round = document.querySelector(".round");
-const turnBoard = document.querySelector(".turn");
-const symbolX = '<i class="fa-solid fa-xmark"></i>';
-const symbolO = '<i class="fa-regular fa-circle"></i>';
-const scoreBoard = document.querySelector(".scoreBoard");
-
-
-const boxNodes = document.querySelectorAll(".box");
-const resume = document.querySelector('.resume');
-const nameBoard = document.querySelector(".nameBoard");
-const waiting = document.querySelector(".waiting");
-const replay = document.querySelector(".replay");
-const loader = document.querySelector(".loading-container");
-const heading = document.querySelector(".heading");
 const server = document.querySelector(".server");
 
-function disconnectSocket(){
+const handleShowTurn = ()=>{
+    showTurnArea();
+}
+const handleUpdateTurn = (turn) => {
+    updateTurn(turn); // if players turn then below statement
+}
+const handleRoundCall = async (data) => {
+    await callRoundBoard(data.n);
+    updateTurn(data.turn);
+}
+const handleScoreNumber = (score) => {
+    setScoreNumber(score);
+}
+const handleOpponentMove = (moveData) => {
+    opponentMove(moveData.position);
+}
+const handleRoundOver = async (data) => {
+    await roundOver(data);
+    sendReady();
+}
+const handleGameOver = async (data) => {
+    disconnectSocket();
+    await gameOver(data); // either "X" or "Y"
+}
+const handleWrongMove = () => {
+    wrongMove();
+}
+
+function disconnectSocket() {
     socket.close();
 }
 
-function handlePlayerJoined() {
-    return async () => {
-        let fullName = document.getElementById("username").value.toUpperCase();
-        if (!fullName.trim()) fullName = "";
-        let username = fullName.trim().split(" ")[0];
-        sendUserName(username);
-    }
-}
-const handleResumeGame = () => {
-    showTurnArea();
+const handlePlayerJoined = () => {
+    let fullName = document.getElementById("username").value.toUpperCase();
+    if (!fullName.trim()) fullName = "";
+    let username = fullName.trim().split(" ")[0];
+    sendUserName(username);
 }
 
 const handleRemoveWaiting = () => {
     removeWaiting();
 }
-
-const handlePlayerLeft = ()=>{
+const handlePlayerLeft = () => {
     playerLeft();
 }
-
-
-function handleGameData() {
-    return async (data) => {
-        await updateSymbol(data.symbol);
-        await setName(data.names);
-        await delay(1000);
-        await fadeOut(waiting, 200);
-        await gameAppear();
-        sendReady();
-    }
+const handleGameData = async (data) => {
+    await gameData(data);
+    sendReady();
 }
 
-function handleGame() {
-    return async (gameState) => {
-        if (gameState.mode === "new") newGame();
-        else resumeGame(gameState.gameData);
-    }
+const handleGame = (gameState) => {
+    if (gameState.mode === "new") newGame();
+    else resumeGame(gameState.gameData);
 }
 
-function handleConnect() {
-    return async () => {
-        await delay(1000);
-        await fadeOut(server, 400);
-        // reconnectAttempts = 0;
-        socket.emit('tellme');  // ask server if there is previous ongoing game
-    }
+const handleConnect = async () => {
+    await delay(1000);
+    await fadeOut(server, 400);
+    // reconnectAttempts = 0;
+    socket.emit('tellme');  // ask server if there is previous ongoing game
 }
 
 
@@ -150,33 +114,33 @@ async function connectWebSocket() {
 
     socket = io(url, { withCredentials: true });
 
-    socket.on('connect', handleConnect()); // When Connected
+    socket.on('connect', handleConnect); // When Connected
 
-    socket.on('game', handleGame());// check for previous game to resume or new game
+    socket.on('game', handleGame);// check for previous game to resume or new game
 
-    socket.on('playerJoined', handlePlayerJoined());  // Both Player
+    socket.on('playerJoined', handlePlayerJoined);  // Both Player
 
-    socket.on('gameData', handleGameData());   // listen for symbol
-
-    socket.on('playerLeft',handlePlayerLeft);
-
-    socket.on('resumeGame', handleResumeGame);
+    socket.on('playerLeft', handlePlayerLeft);
 
     socket.on('removeWaiting', handleRemoveWaiting);
 
-    socket.on('turn', handleUpdateTurn());   // Recieving Turn
+    socket.on('gameData', handleGameData);   // listen for symbol
 
-    socket.on('callRound', handleRoundCall());  // Round Call
+    socket.on('turn', handleUpdateTurn);   // Recieving Turn
 
-    socket.on('score', handleScoreNumber());     // Server send Score after Round
+    socket.on('showTurn',handleShowTurn);
 
-    socket.on('opponentMove', handleOpponentMove());    // Process Opponent Move
+    socket.on('callRound', handleRoundCall);  // Round Call
 
-    socket.on('roundOver', handleRoundOver());   // When Server send Round Results
+    socket.on('score', handleScoreNumber);     // Server send Score after Round
 
-    socket.on('gameOver', handleGameOver());    // When Server Send Gameover
+    socket.on('opponentMove', handleOpponentMove);    // Process Opponent Move
 
-    socket.on('wrongMove', handleWrongMove()); // when Wrong Move sent by client after manipulation
+    socket.on('roundOver', handleRoundOver);   // When Server send Round Results
+
+    socket.on('gameOver', handleGameOver);    // When Server Send Gameover
+
+    socket.on('wrongMove', handleWrongMove); // when Wrong Move sent by client after manipulation
 
     // socket.on('error', (error) => {
     //     console.log("WebSocket Error Trying to reconnect");
@@ -203,4 +167,4 @@ async function connectWebSocket() {
     // };
 }
 
-export { connectServer, connectWebSocket, joinRoom, sendUserName, sendReadyToResume, sendReady, makeMove,disconnectSocket }
+export { connectServer, connectWebSocket, joinRoom, sendUserName, sendReadyToResume, sendReady, makeMove, disconnectSocket }

@@ -1,21 +1,22 @@
 const express = require('express');
 const http = require('http');
-const PORT = process.env.PORT || 3000;
 const { Server } = require('socket.io');
-const cookieParser = require('cookie-parser');
-const cookie = require("cookie");
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const { v4: uuidv4 } = require('uuid');
+const cookie = require("cookie");
 
 let nanoid;
 (async () => {
     const nanoidModule = await import('nanoid');
     nanoid = nanoidModule.nanoid;
 })();
-const { v4: uuidv4 } = require('uuid');
 
-
+// Server Setup
 const app = express();
 const server = http.createServer(app);
+const PORT = process.env.PORT || 3000;
+
 // const frontendURL = "http://127.0.0.1:5500";
 const frontendURL = "https://toe-online-wars.vercel.app";
 const io = new Server(server, {
@@ -27,7 +28,10 @@ const io = new Server(server, {
 });
 
 
-app.use(cors({ origin: frontendURL, credentials: true }));
+app.use(cors({
+    origin: frontendURL,
+    credentials: true,
+}));
 app.use(cookieParser());
 
 
@@ -65,10 +69,9 @@ const winPatterns = [
     [6, 7, 8]
 ];
 
-let rooms = {};
-const players = {};
-let roomCount = 1;
-let userSocketMap = {};
+const rooms = {};
+const userSocketMap = new Map();
+const socketRooms = new Map();
 
 // Reset Board
 function resetBoard(game) {
@@ -91,9 +94,9 @@ async function updateYourTurn(roomId) {
 }
 
 // checks Winner
-function checkWinner(game, box) {
+function checkWinner(game, playerBoxes) {
     for (let list of winPatterns) {
-        let isSubset = list.every(num => box.includes(num));
+        let isSubset = list.every(num => playerBoxes.includes(num));
         if (isSubset == true)
             return { status: 'win', list };
     }
@@ -113,6 +116,7 @@ function handleCheckWinner(game, roomId, boxKey) {
             game[player]++;
         }
         io.to(roomId).emit('roundOver', roundOver);
+        game.roundBoardEmitted = false;
         resetBoard(game);
         changeTurn(roomId);
     } else {
@@ -126,7 +130,7 @@ function handlePlayerMove(socket) {
 
     socket.on('move', (moveData) => {
 
-        const roomId = getRoomId(socket);
+        const roomId = socketRooms.get(socket.id);
 
         if (!roomId || !rooms[roomId]) return; // Room not found
 
@@ -160,10 +164,11 @@ function handlePlayerMove(socket) {
 function handleDisconnection(socket) {
     socket.on('disconnecting', () => {
 
-        delete userSocketMap[socket.data.userId];
         // Find and remove player from room
-        const roomId = getRoomId(socket);
+        const roomId = socketRooms.get(socket.id);
         console.log(`Player disconnected: ${socket.id} from Room: ${roomId}`);
+        userSocketMap.delete(socket.data.userId);
+        socketRooms.delete(socket.id);
         const room = rooms[roomId];
         if (roomId && room) {
             room.activeUsers = room.activeUsers.filter(id => id !== socket.data.userId);
@@ -191,40 +196,39 @@ async function handleClearRoom(roomId) {
 }
 
 // Handle Round Calling
-async function handleRound(game, roomId) {
+async function handleRound(room, roomId) {
+    io.to(roomId).emit('score', { "X": room.playerXWin, "O": room.playerOWin });
+    if (room.roundNumber <= 3) {
+        if (room.roundBoardEmitted === false) {
+            console.log("Round Board emitted", room.roundNumber);
+            io.to(roomId).emit('callRound', { n: room.roundNumber, turn: room.turn });
+            room.roundBoardEmitted = true;
+            room.gameStarted = true;
+            room.roundNumber++; // increase roundNumber
 
-    const room = rooms[roomId];
-
-    console.log("Round Board emitted");
-
-    io.to(roomId).emit('callRound', room.roundNumber);
-    room.gameStarted = true;
-    game.roundNumber++; // increase roundNumber
-    setTimeout(async () => {
-        updateYourTurn(roomId);
-    }, 1300);
+        } else {
+            updateYourTurn(roomId);
+            io.to(roomId).emit('showTurn', room.turn);
+        }
+    } else {
+        let winner;
+        if (room.playerOWin == room.playerXWin) winner = "draw";
+        else if (room.playerOWin > room.playerXWin) winner = "O";
+        else winner = "X";
+        io.to(roomId).emit('gameOver', winner);
+        handleClearRoom(roomId); // clear room
+    }
 }
 
 // Handle Ready State
 function handleStartRound(socket) {
     socket.on('ready', () => {
-        const roomId = getRoomId(socket);
+        const roomId = socketRooms.get(socket.id);
         const game = rooms[roomId];
         game.ready = game.ready.filter(socketId => socketId !== socket.id);
         game.ready.push(socket.id);
         if (game.ready.length === 2) {
-
-            io.to(roomId).emit('score', { "X": game.playerXWin, "O": game.playerOWin });
-            if (game.roundNumber <= 3)
-                handleRound(game, roomId);
-            else {
-                let winner;
-                if (game.playerOWin == game.playerXWin) winner = "draw";
-                else if (game.playerOWin > game.playerXWin) winner = "O";
-                else winner = "X";
-                io.to(roomId).emit('gameOver', winner);
-                handleClearRoom(roomId); // clear room
-            }
+            handleRound(game, roomId);
         }
     })
 }
@@ -244,7 +248,7 @@ function generateGameData(userId) {
 function handlePlayerName(socket) {
     socket.on('username', (username) => {
         const userId = socket.data.userId;
-        const roomId = getRoomId(socket);
+        const roomId = socketRooms.get(socket.id);
         const room = rooms[roomId];
         username = username.trim().split(" ")[0];
         room.playerNames.push({ userId, username });
@@ -256,33 +260,23 @@ function handlePlayerName(socket) {
             const userId1 = room.users[0];
             const userId2 = room.users[1];
 
-            const socket1 = userSocketMap[userId1];
-            const socket2 = userSocketMap[userId2];
+            const socket1 = userSocketMap.get(userId1);
+            const socket2 = userSocketMap.get(userId2);
 
             const gameData1 = generateGameData(userId1);
-            const gameDate2 = generateGameData(userId2);
+            const gameData2 = generateGameData(userId2);
 
             io.to(socket1).emit('gameData', gameData1);
-            io.to(socket2).emit('gameData', gameDate2);
+            io.to(socket2).emit('gameData', gameData2);
         }
     })
 }
 
 // find room
 function findRoom(userId) {
-    for (const roomId in rooms) {
-        if (rooms[roomId].users.includes(userId)) {
-            return roomId;
-        }
-    }
-    return null;
+    return Object.keys(rooms).find(roomId => rooms[roomId].users.includes(userId)) || null;
 }
 
-// Get roomId
-function getRoomId(socket) {
-    const socketRooms = [...socket.rooms].filter(room => room !== socket.id); // Get all rooms the socket is in
-    return socketRooms.length > 0 ? socketRooms[0] : null;// The first is the socket ID, the second is the assigned roomId
-}
 
 // Generate New Room Id
 function generateRoomId() {
@@ -300,6 +294,7 @@ function createRoom(roomId) {
         winner: null,
         turn: "X", // or true
         roundNumber: 1,
+        roundBoardEmitted: false,
         playerXWin: 0,
         playerOWin: 0,
         ready: [],
@@ -335,6 +330,7 @@ function handleJoinRoom(socket) {
 
         // Join the room
         socket.join(assignedRoom);
+        socketRooms.set(socket.id, assignedRoom);
         const room = rooms[assignedRoom];
         room.users.push(socket.data.userId);
         room.activeUsers.push(socket.data.userId);
@@ -350,14 +346,13 @@ function handleJoinRoom(socket) {
 
 //handle ready to resume
 function handleGameResume(socket) {
-    socket.on('readyResume', () => {
-        const roomId = getRoomId(socket);
+    socket.on('readyResume', async () => {
+        const roomId = socketRooms.get(socket.id);
         const room = rooms[roomId];
         room.activeUsers = room.activeUsers.filter(id => id !== socket.data.userId);
         room.activeUsers.push(socket.data.userId);
         if (room.activeUsers.length === 2) {
-            updateYourTurn(roomId);
-            socket.emit('resumeGame');
+            handleRound(room, roomId);
             socket.to(roomId).emit('removeWaiting');
         }
     });
@@ -369,7 +364,7 @@ function handleGameState(socket) {
         const userId = socket.data.userId;
 
         const roomId = findRoom(userId);
-
+        console.log("roomid:",roomId);
         let gameState;
         if (roomId) {
             const room = rooms[roomId];
@@ -380,10 +375,10 @@ function handleGameState(socket) {
 
             gameState = { mode: "resume", gameData };
             socket.join(roomId);
+            socketRooms.set(socket.id, roomId);
             room.activeUsers = room.activeUsers.filter(id => id !== socket.data.userId);
             room.activeUsers.push(socket.data.userId);
             console.log("Previous room assigned")
-            console.log(room);
         } else {
             gameState = { mode: 'new' }
         }
@@ -400,7 +395,7 @@ function handleCookie(socket) {
     try {
         const userId = cookies.userId;
         socket.data.userId = userId;
-        userSocketMap[userId] = socket.id; //  map socket id with userId;
+        userSocketMap.set(userId, socket.id); //  map socket id with userId;
     } catch (error) {
         console.log("Error handling Cookie:", error.message);
         socket.disconnect();

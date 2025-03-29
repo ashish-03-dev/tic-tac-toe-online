@@ -3,7 +3,7 @@ import {
     handleSubmitName,
     handleRestartGame,
     handleBoxClick,
-} from './controllers/ui.js';
+} from './ui.js';
 
 
 const boxNodes = document.querySelectorAll(".box");
