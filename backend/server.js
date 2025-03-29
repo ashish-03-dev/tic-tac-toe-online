@@ -166,10 +166,11 @@ function handleDisconnection(socket) {
 
         // Find and remove player from room
         const roomId = socketRooms.get(socket.id);
+        const room = rooms[roomId];
         console.log(`Player disconnected: ${socket.id} from Room: ${roomId}`);
+        
         userSocketMap.delete(socket.data.userId);
         socketRooms.delete(socket.id);
-        const room = rooms[roomId];
         if (roomId && room) {
             room.activeUsers = room.activeUsers.filter(id => id !== socket.data.userId);
             if (room.activeUsers.length === 0) {
@@ -198,25 +199,24 @@ async function handleClearRoom(roomId) {
 // Handle Round Calling
 async function handleRound(room, roomId) {
     io.to(roomId).emit('score', { "X": room.playerXWin, "O": room.playerOWin });
-    if (room.roundNumber <= 3) {
-        if (room.roundBoardEmitted === false) {
+    if (room.roundBoardEmitted === false) {
+        if (room.roundNumber <= 3) {
+
             console.log("Round Board emitted", room.roundNumber);
             io.to(roomId).emit('callRound', { n: room.roundNumber, turn: room.turn });
             room.roundBoardEmitted = true;
-            room.gameStarted = true;
             room.roundNumber++; // increase roundNumber
-
         } else {
-            updateYourTurn(roomId);
-            io.to(roomId).emit('showTurn', room.turn);
+            let winner;
+            if (room.playerOWin == room.playerXWin) winner = "draw";
+            else if (room.playerOWin > room.playerXWin) winner = "O";
+            else winner = "X";
+            io.to(roomId).emit('gameOver', winner);
+            handleClearRoom(roomId); // clear room
         }
     } else {
-        let winner;
-        if (room.playerOWin == room.playerXWin) winner = "draw";
-        else if (room.playerOWin > room.playerXWin) winner = "O";
-        else winner = "X";
-        io.to(roomId).emit('gameOver', winner);
-        handleClearRoom(roomId); // clear room
+        updateYourTurn(roomId);
+        io.to(roomId).emit('showTurn', room.turn);
     }
 }
 
@@ -290,7 +290,6 @@ function createRoom(roomId) {
         users: [],
         playerNames: [],
         activeUsers: [],
-        gameStarted: false,
         winner: null,
         turn: "X", // or true
         roundNumber: 1,
@@ -364,7 +363,7 @@ function handleGameState(socket) {
         const userId = socket.data.userId;
 
         const roomId = findRoom(userId);
-        console.log("roomid:",roomId);
+        console.log("roomid:", roomId);
         let gameState;
         if (roomId) {
             const room = rooms[roomId];

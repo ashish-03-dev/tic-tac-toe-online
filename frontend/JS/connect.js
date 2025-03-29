@@ -72,7 +72,10 @@ const handleGameData = async (data) => {
 
 const handleGame = (gameState) => {
     if (gameState.mode === "new") newGame();
-    else resumeGame(gameState.gameData);
+    else {
+        console.log(gameState.mode);
+        resumeGame(gameState.gameData);
+    }
 }
 
 const handleConnect = async () => {
