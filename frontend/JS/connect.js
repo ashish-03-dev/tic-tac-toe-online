@@ -153,7 +153,7 @@ async function connectWebSocket() {
     // When Disconnected
     socket.on('disconnect'), () => {
         console.log("Disconnected from Server");
-        socket = null;
+        // socket = null;
     };
 }
 
