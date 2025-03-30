@@ -49,7 +49,8 @@ const handleWrongMove = () => {
 }
 
 function disconnectSocket() {
-    socket.close();
+    console.log("disconnect socket called");
+    socket.disconnect();
 }
 
 const handlePlayerJoined = () => {
@@ -151,10 +152,10 @@ async function connectWebSocket() {
     });
 
     // When Disconnected
-    socket.on('disconnect'), () => {
+    socket.on('disconnect', () => {
         console.log("Disconnected from Server");
-        // socket = null;
-    };
+        socket = null;
+    });
 }
 
 export { connectServer, connectWebSocket, joinRoom, sendUserName, sendReadyToResume, sendReady, makeMove, disconnectSocket }

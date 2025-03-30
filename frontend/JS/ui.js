@@ -314,10 +314,6 @@ async function upShadow(box) {
 
 async function closeGame() { // remove from server 
     await fadeOut(game, 400);
-
-    // socket.close();
-    // socket = null;
-
     appearBlock(replay, 300); // call replay Board
 }
 
