@@ -1,51 +1,40 @@
-Here’s your complete **README.md** file in Markdown format. Copy and paste it into your GitHub repository’s **README.md** file.  
+# 🎮 Toe Online Wars
+
+**Toe Online Wars** is a **real-time multiplayer Tic-Tac-Toe** game built with **Node.js, WebSockets, and Express.js**. It provides a seamless gaming experience with automated matchmaking, fair play enforcement, and a persistent game state.
+
+🚀 **Live Demo:** [Toe Online Wars](https://toe-online-wars.vercel.app)
 
 ---
 
-```markdown
-# 🕹️ Toe Online Wars – Real-time Multiplayer Tic-Tac-Toe  
+## 🛠️ Features
 
-Toe Online Wars is a **real-time multiplayer Tic-Tac-Toe game** built with **Node.js, Express, and Socket.io**. It provides a smooth online gaming experience with automatic matchmaking, reconnection support, and fair play mechanisms.  
-
-🚀 **Live Demo:** [Toe Online Wars](https://toe-online-wars.vercel.app)  
-
----
-
-## ✨ Features  
-
-- 🔄 **Real-time Gameplay** – Instant move updates using WebSockets.  
-- 🛡️ **Fair Play Mechanism** – Server-side validation to prevent cheating.  
-- 🔄 **Reconnect Support** – Players can resume the game if they disconnect.  
-- 🤖 **Auto-Matchmaking** – Automatically finds an opponent.  
-- 🏆 **Best of 3 Rounds** – Keeps track of scores and determines a winner.  
-- 🍪 **Session Persistence** – Uses cookies to maintain user identity.  
-- 🎭 **Spectator Mode (Upcoming)** – Watch live matches.  
-- 🔒 **Private Rooms (Upcoming)** – Play with friends using a room code.  
-- 💬 **In-Game Chat (Upcoming)** – Chat with your opponent during gameplay.  
-- 🤖 **AI Opponent (Upcoming)** – Play against a bot when no human player is available.  
+✅ **Real-time Gameplay:** Instant updates using **WebSockets**.  
+✅ **Automated Matchmaking:** Players are matched in available rooms.  
+✅ **Persistent Sessions:** Uses **cookies** to reconnect users to their previous game.  
+✅ **Fair Play System:** Move validation and win checks are handled on the server.  
+✅ **Score Tracking:** Tracks round wins and declares the final game winner.  
+✅ **Responsive UI:** Works smoothly on mobile and desktop.  
+✅ **Secure & Scalable:** Built with **Express.js**, **Socket.io**, and **UUID** for unique session tracking.  
 
 ---
 
-## 🛠️ Tech Stack  
+## 🚀 Tech Stack
 
-- **Frontend:** HTML, CSS, JavaScript  
-- **Backend:** Node.js, Express.js, WebSockets (Socket.io)  
-- **Database (Upcoming):** MongoDB / Firebase for player stats and matchmaking  
-- **Hosting:** Vercel (Frontend), Render/Heroku (Backend)  
+- **Frontend:** HTML, CSS, JavaScript (Hosted on Vercel)
+- **Backend:** Node.js, Express.js, Socket.io
+- **Deployment:** Vercel (Frontend), Render/Heroku (Backend)
 
 ---
 
-## 🚀 Getting Started (Run Locally)  
+## 🏗️ Installation & Setup
 
-### 1️⃣ Clone the Repository  
-
+### 1️⃣ Clone the Repository
 ```bash
 git clone https://github.com/ashish-03-dev/toe-online-wars.git
 cd toe-online-wars
 ```
 
-### 2️⃣ Install Dependencies  
-
+### 2️⃣ Install Dependencies
 ```bash
 npm install
 ```
@@ -59,49 +48,31 @@ Before running locally, update the frontend and backend URLs inside **server.js*
 const frontendURL = "http://127.0.0.1:5500";  // Update this if using a different frontend setup
 ```
 
----
-
-### 4️⃣ Start the Server  
-
+### 4️⃣ Start the Server 
 ```bash
 node server.js
 ```
-
-Server will start at **http://localhost:3000**  
-
----
-
-## 🎮 How to Play?  
-
-1️⃣ Open the [live demo](https://toe-online-wars.vercel.app) or run locally.  
-2️⃣ Click **"Join Game"** – The system will find an opponent.  
-3️⃣ Play the **Best of 3** rounds.  
-4️⃣ If you **disconnect**, you can **rejoin** the same game.  
-5️⃣ Win and challenge a new opponent! 🎉  
+Server will start on **http://localhost:3000**
 
 ---
 
-## 🏗️ Future Enhancements  
-
-✅ **Spectator Mode** – Watch live matches.  
-✅ **Private Rooms** – Play with specific friends.  
-✅ **Chat System** – Send messages during gameplay.  
-✅ **AI Opponent** – Play against a bot when no player is available.  
-✅ **Leaderboard & Stats** – Track player rankings and win rates.  
+## 🎯 How to Play?
+1️⃣ Visit the [Live Game](https://toe-online-wars.vercel.app).  
+2️⃣ Enter a username and **click Start** to join a game.  
+3️⃣ Get matched with an opponent automatically.  
+4️⃣ Play the classic **Tic-Tac-Toe** game in real-time!  
+5️⃣ The first to win **2 out of 3 rounds** wins the match.  
 
 ---
 
-## 🛠️ Project Setup  
+## 🖥️ API Endpoints
 
-### Project Structure  
+| Endpoint      | Method | Description                          |
+|--------------|--------|--------------------------------------|
+| `/`          | GET    | Check if the server is live         |
+| `/set-cookie` | GET   | Assigns a unique user ID cookie     |
 
-```
-/toe-online-wars
-│── /public              # Frontend (to be integrated)
-│── /server.js           # Node.js server with WebSockets
-│── /package.json        # Dependencies and scripts
-│── /README.md           # Project documentation
-```
+---
 
 ### Backend Dependencies  
 
@@ -112,13 +83,28 @@ Server will start at **http://localhost:3000**
 
 ---
 
-## 🏆 Contributions  
+## ⚡ WebSocket Events
 
-Contributions are welcome! Feel free to:  
+| Event Name     | Triggered When...                         |
+|---------------|----------------------------------|
+| `joinRoom`    | A player joins a game room     |
+| `move`        | A player makes a move          |
+| `roundOver`   | A round ends                   |
+| `gameOver`    | A match is completed           |
+| `playerLeft`  | An opponent disconnects        |
 
-- **Submit issues** for bugs or feature requests.  
-- **Create a pull request** with improvements.  
-- **Share ideas** to enhance the game.  
+---
+
+## 🌎 Deployment
+
+1️⃣ Deploy frontend on **Vercel**.  
+2️⃣ Deploy backend on **Render/Heroku**.  
+3️⃣ Update **CORS settings** to match your deployment.  
+
+---
+
+## 🤝 Contributing
+Feel free to submit issues or pull requests to improve the project! 🎯
 
 ---
 
@@ -129,14 +115,9 @@ Contributions are welcome! Feel free to:
 
 ---
 
-```
+## 📜 License
+This project is **open-source** and available under the **MIT License**.
 
-### Changes and Additions:
-✅ **Reminder to update frontend & backend URLs**  
-✅ **Clear installation steps**  
-✅ **Future enhancements section**  
-✅ **Project structure overview**  
-✅ **Dependency explanations**  
-✅ **Contribution guidelines**  
+---
 
-This README is now **fully detailed** and **GitHub-ready**. Let me know if you need any more tweaks! 🚀
+🎮 **Enjoy Playing Toe Online Wars!** 🚀
