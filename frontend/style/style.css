@@ -264,7 +264,7 @@ body {
 
 .score {
     height: 70px;
-    width: 200px;
+    min-width: 170px;
     font-size: 30px;
     font-family: Arial, Helvetica, sans-serif;
     font-weight: 800;
