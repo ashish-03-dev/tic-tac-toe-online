@@ -20,7 +20,7 @@ import {
 
 const server = document.querySelector(".server");
 
-const handleShowTurn = ()=>{
+const handleShowTurn = () => {
     showTurnArea();
 }
 const handleUpdateTurn = (turn) => {
@@ -131,7 +131,7 @@ async function connectWebSocket() {
 
     socket.on('turn', handleUpdateTurn);   // Recieving Turn
 
-    socket.on('showTurn',handleShowTurn);
+    socket.on('showTurn', handleShowTurn);
 
     socket.on('callRound', handleRoundCall);  // Round Call
 
@@ -145,29 +145,16 @@ async function connectWebSocket() {
 
     socket.on('wrongMove', handleWrongMove); // when Wrong Move sent by client after manipulation
 
-    // socket.on('error', (error) => {
-    //     console.log("WebSocket Error Trying to reconnect");
-    //     socket.onclose();
-    // });
+    socket.on('error', (error) => {
+        console.log("WebSocket Error Trying to reconnect");
+        socket.connect();
+    });
 
     // When Disconnected
-    // socket.on('disconnect'), () => {
-    //     console.log("Disconnected from Server");
-
-    //     socket = null;
-
-    //     document.querySelector(".play").style.display = "block";
-    //     document.querySelector(".leaveOnline").style.display = "none";
-
-    //     if (reconnectAttempts <= 3) {
-    //         console.log("Reconnecting...");
-
-    //         // Trying to reconnect after an Increasing delay
-    //         let delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
-    //         setTimeout(connectWebSocket, delay);
-    //         reconnectAttempts++;
-    //     }
-    // };
+    socket.on('disconnect'), () => {
+        console.log("Disconnected from Server");
+        socket = null;
+    };
 }
 
 export { connectServer, connectWebSocket, joinRoom, sendUserName, sendReadyToResume, sendReady, makeMove, disconnectSocket }
