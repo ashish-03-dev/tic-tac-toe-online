@@ -228,7 +228,8 @@ body {
     box-sizing: border-box;
     scale: 1;
     position: relative;
-    transition: scale .8s linear, box-shadow .15s linear;
+    transition: box-shadow .15s linear, transform .15s linear;
+    cursor: pointer;
     box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.1),
         -8px -8px 8px white;
 }
@@ -250,7 +251,7 @@ body {
     font-size: 50px;
     align-content: center;
     scale: 1;
-    transition: scale 0.33s linear;
+    transition: scale 0.31s linear;
 }
 
 
@@ -414,10 +415,10 @@ body {
 
 @media (hover:hover) {
     .box:hover {
-        opacity: .6;
+        transform: scale(1.05);
     }
 
     .box.clicked:hover {
-        opacity: 1;
+        transform:none;
     }
 }

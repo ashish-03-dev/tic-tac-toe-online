@@ -189,7 +189,7 @@ async function fillBox(box) {
 
     insetShadow(box);
     await delay(10);
-    div.style.scale = "0.92";
+    div.style.scale = "0.9";
 }
 
 async function insetShadow(box) {
@@ -222,7 +222,7 @@ async function zoomInBoxes(list) {
     for (let i of strArray) {
         let box = document.getElementById(i);
         let tick = box.querySelector(".tick");
-        tick.style.scale = "1.15";
+        tick.style.scale = "1.08";
     }
 
     await delay(400);
