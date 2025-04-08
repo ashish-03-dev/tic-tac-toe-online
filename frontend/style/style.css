@@ -232,6 +232,8 @@ body {
     cursor: pointer;
     box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.1),
         -8px -8px 8px white;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .box.clicked {
@@ -251,9 +253,9 @@ body {
     font-size: 50px;
     align-content: center;
     scale: 1;
+    font-size: 3.5rem;
     transition: scale 0.31s linear;
 }
-
 
 .scoreBoard {
     height: 130px;
@@ -394,9 +396,10 @@ body {
     position: absolute;
     display: none;
     opacity: 0;
-    transition: all .4s linear;
+    transition: all .2s linear;
     cursor: pointer;
     box-shadow: 8px 8px 8px rgba(0, 0, 0, 0.1), -8px -8px 8px white;
+    -webkit-tap-highlight-color: transparent;
 
 }
 

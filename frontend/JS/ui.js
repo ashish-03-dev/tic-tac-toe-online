@@ -15,7 +15,7 @@ const winner = document.querySelector(".winner");
 const round = document.querySelector(".round");
 const turnBoard = document.querySelector(".turn");
 const symbolX = '<i class="fa-solid fa-xmark"></i>';
-const symbolO = '<i class="fa-regular fa-circle"></i>';
+const symbolO = '<i class="fa-regular fa-o"></i>';
 const scoreBoard = document.querySelector(".scoreBoard");
 
 
@@ -99,7 +99,7 @@ async function updateBox(playerBoxes) {
 }
 
 async function handleRestartGame() {
-    await fadeOut(replay, 320);
+    await fadeOut(replay, 200);
     connectWebSocket(); // connect to server
 }
 
@@ -314,7 +314,7 @@ async function upShadow(box) {
 
 async function closeGame() { // remove from server 
     await fadeOut(game, 400);
-    appearBlock(replay, 300); // call replay Board
+    appearBlock(replay, 200); // call replay Board
 }
 
 function delay(ms) {

@@ -107,6 +107,7 @@ let socket = null;
 
 const url = "https://onlinetictactoe-yf4j.onrender.com";
 // const url = "http://127.0.0.1:3000";
+// const url = "http://192.168.0.107:3000";
 
 async function connectServer() {
     await fetch(url + '/set-cookie', { credentials: "include" });

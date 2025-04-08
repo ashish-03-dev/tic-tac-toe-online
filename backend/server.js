@@ -19,6 +19,7 @@ const PORT = process.env.PORT || 3000;
 
 // const frontendURL = "http://127.0.0.1:5500";
 const frontendURL = "https://toe-online-wars.vercel.app";
+// const frontendURL = 'http://192.168.0.107:5500';
 const io = new Server(server, {
     cors: {
         origin: frontendURL,
