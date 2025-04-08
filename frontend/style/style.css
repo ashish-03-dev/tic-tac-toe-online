@@ -425,8 +425,8 @@ body {
         transform:none;
     }
 }
-@media (max-width:768){
+@media (max-width:400px) {
     :root{
-        --font-size: 1.2rem;
+        --font-size: 1rem;
     }
 }
